@@ -1,10 +1,14 @@
 ---
 title: "DISTRIBUCIONES DE FRECUENCIAS"
 subtitle: "TALLER_1"
-author: 
+author:
   - name: Miguel angel cañola
+    affiliation: "Universidad del Tolima"
+    affiliation-url: "https://www.ut.edu.co/"
   - name: Mariem sofia Sterling Murcia
-  - name: Alisson candia 
+    affiliation: "Universidad del Tolima"
+    affiliation-url: "https://www.ut.edu.co/"
+  - name: Alisson candia
     affiliation: "Universidad del Tolima"
     affiliation-url: "https://www.ut.edu.co/"
 date: today
@@ -158,6 +162,8 @@ glimpse(educacion)
 **Análisis de frecuencias del género de los encuestados**
 
 ::: panel-tabset
+## Tabla
+
 ```{r}
 # Crear la tabla original
 tabla <- tibble(Genero = educacion$Genero) %>% 
@@ -171,7 +177,7 @@ tabla <- tibble(Genero = educacion$Genero) %>%
 tabla <- tabla %>% mutate(
   Genero = as.character(Genero))
 
-# Añadir la filxa de totales
+# Añadir la fila de totales
 totales <- tibble(
   Genero = "Total",
   fi = sum(tabla$fi),
@@ -516,8 +522,6 @@ La distribución muestra que el 37,33 % de los encuestados presenta un nivel baj
 :::
 
 **Distribución de frecuencias de los encuestados según el Nivel de Satisfaccion**
-
-**ribución de frecuencias de los encuestados según la Tecnologia**
 
 ::: panel-tabset
 ## Tabla
@@ -866,17 +870,30 @@ tabla %>%
 ## Histograma
 
 ```{r}
+# Cargar librerías
+library(readxl)
 library(ggplot2)
 
-# Graficar histograma (usando geom_col porque son datos agrupados)
+# Histograma de los datos individuales de Horas
 ggplot(educacion, aes(x = Horas)) +
-  geom_histogram(width = 7, fill = "steelblue", color = "black") +
-  labs(
-    title = "Histograma de Horas de estudio",
-    x = "Horas",
-    y = "Frecuencia Absoluta"
+  geom_histogram(
+    binwidth = A,
+    boundary = Xmin,
+    fill = "steelblue",
+    color = "black"
   ) +
-  theme_minimal()
+  labs(
+    title = "Distribución de las horas",
+    x = "Horas",
+    y = "Frecuencia absoluta"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    )
+  )
 ```
 
 ## Ojiva
@@ -967,7 +984,217 @@ El análisis de la distribución de **Horas de estudio** muestra una concentraci
 Por otro lado, la **ojiva** presenta una pendiente constante, confirmando que no existen valores extremos que alteren significativamente el promedio. En conclusión, la variable muestra un comportamiento estable, donde aproximadamente el 50% de la muestra dedica menos de \[X\] horas, permitiendo identificar claramente el punto de equilibrio en la carga académica del grupo.
 :::
 
-<br>
+**Generación de intervalos de los Promedios**
+
+::: panel-tabset
+## Mínimo
+
+```{r}
+Min <- min(educacion$Promedio)
+Min
+```
+
+## Máximo
+
+```{r}
+Max <- max(educacion$Promedio)
+Max
+```
+
+## Rango
+
+```{r}
+R <- Max-Min 
+R 
+```
+
+## Intervalos
+
+```{r}
+m <- round(1 + 3.322*log10(nrow(educacion))) 
+  m 
+```
+
+## Amplitud
+
+```{r}
+A <- ceiling((R/m) * 100) / 100 
+A
+```
+
+## Rango corregido
+
+```{r}
+RC <- A*m 
+RC
+```
+
+## Diferencia
+
+```{r}
+D <- RC-R 
+D
+```
+
+## Mínimo corregido
+
+```{r}
+Xmin <- Min-floor((D/2)* 100) / 100 
+Xmin
+```
+
+## Máximo corregido
+
+```{r}
+Xmax <- Max+round(ceiling((D/2)* 1000) / 1000,2) 
+Xmax
+```
+:::
+
+**Distribución de frecuencias de los promedios de los usuarios encuestados**
+
+::: panel-tabset
+## Tabla
+
+```{r}
+library(dplyr)
+library(kableExtra)
+
+m1 <- (Xmin+(Xmin+A))/2
+
+interv = cut(x = educacion$Promedio , breaks = seq(Xmin, Xmax, by = A), include.lowest = TRUE)
+
+tabla <- tibble(Promedio = interv) %>% 
+  group_by(Promedio) %>% 
+  summarise(fi = n()) %>% 
+  mutate(hi = fi / sum(fi)) %>% 
+  mutate(
+    mi = seq(m1, by = A, length.out = n()) %>% as.character(),
+  Fi = cumsum(fi) %>% as.character(),
+  Hi = format(cumsum(fi / sum(fi)),7) %>% as.character()
+  ) %>% 
+  relocate(Promedio, mi, fi)
+  
+
+# Agregar la fila total con casillas en blanco
+tabla <- tabla %>% 
+  add_row(Promedio = "Total", mi = "", fi = sum(tabla$fi), hi = sum(tabla$hi), Fi = "", Hi = "")
+
+# Generar la tabla con knitr::kable y agregar título
+tabla %>% 
+  knitr::kable(
+    col.names = c("Promedio", "mi", "fi", "hi", "Fi", "Hi"), 
+    align = c("l", "r", "r", "r", "r", "r")
+  ) %>% 
+  kableExtra::kable_styling(full_width = FALSE) %>% 
+  kableExtra::add_header_above(c("Distribuciones de frecuencias para la variable del Promedio" = 6))
+```
+
+## Histograma
+
+```{r}
+# Cargar librerías
+library(readxl)
+library(ggplot2)
+
+# Histograma de los datos individuales de Promedio
+ggplot(educacion, aes(x = Promedio)) +
+  geom_histogram(
+    binwidth = A,
+    boundary = Xmin,
+    fill = "steelblue",
+    color = "black"
+  ) +
+  labs(
+    title = "Distribución de los Promedios",
+    x = "Promedio",
+    y = "Frecuencia absoluta"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    )
+  )
+```
+
+## Ojiva
+
+```{r}
+library(ggplot2)
+
+Xmin <- min(educacion$Promedio, na.rm = TRUE)
+ojiva_data <- educacion %>%
+  mutate(interv = cut(Promedio, breaks = seq(Xmin, Xmin + RC, by = A), 
+                      include.lowest = TRUE, right = FALSE)) %>%
+  group_by(interv) %>%
+  summarise(fi = n()) %>%
+  mutate(hi = fi / sum(fi),
+         Hi = cumsum(hi),
+         ls = seq(Xmin + A, Xmin + RC, by = A))
+
+# Graficar la ojiva
+ggplot(ojiva_data, aes(x = ls, y = Hi)) +
+geom_line(
+  color = "#17365D",
+  linewidth = 1.1) +
+geom_point(
+  color = "#DC143C",
+  size = 2.5) +
+  labs(
+    title = "Ojiva de Frecuencia acumulada: Promedio",
+    x = "Promedio",
+    y = "Frecuencia acumulada relativa"
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+```
+
+## Densidad
+
+```{r}
+# Librerías
+library(ggplot2)
+library(dplyr)
+
+# Elegir la variable que deseas analizar
+variable <- "Promedio"
+
+# Verificar que la variable exista
+if (!variable %in% names(educacion)) {
+  stop("La variable seleccionada no existe en el dataframe educación.")
+}
+
+# Extraer los datos y conservar solo valores numéricos válidos
+datos_densidad <- educacion %>%
+  transmute(valor = .data[[variable]]) %>%
+  filter(is.finite(valor))
+
+# Comprobar que existan suficientes observaciones
+if (!is.numeric(educacion[[variable]])) {
+  stop("La variable seleccionada debe ser numérica.")
+}
+
+if (nrow(datos_densidad) < 2 ||
+    dplyr::n_distinct(datos_densidad$valor) < 2) {
+  stop("Se necesitan al menos dos valores numéricos diferentes.")
+}
+
+# Crear la curva de densidad
+ggplot(datos_densidad, aes(x = valor)) +
+   geom_density(
+  color = "#17365D",
+  fill = "#8FAADC",
+  alpha = 0.35,
+  linewidth = 1.1
+)
+```
+
+## Interpretación
+
+La distribución de frecuencias del promedio muestra que los intervalos con mayor número de participantes son de 3,23 a 3,67, con 40 personas (13,33 %), y de 2,79 a 3,23, con 39 personas (13 %). En contraste, el intervalo de 1,91 a 2,35 presenta la menor frecuencia, con 25 participantes (8,33 %). La frecuencia relativa acumulada indica que el 67,33 % de los datos se encuentra en valores de promedio de hasta 3,67, mientras que el 100 % se alcanza al incluir el último intervalo, hasta 4,99. En general, se observa una mayor concentración de participantes en los intervalos centrales de la distribución.
+:::
 
 ## .Tablas de contingencia
 
